@@ -268,7 +268,7 @@ should compile to:
 ```c
 #define MATCH_TYPE(x, i, j) (x->module == i && x->type==j)
 #define MATCH_CTOR(x, k) (x->ctor == k)
-
+#define SKIP_HDR(x) (x+4) // header is word32
 
 // this exhaustive, as guaranteed by type checking!!
 int f(char* x)
@@ -278,7 +278,7 @@ int f(char* x)
     if (MATCH_CTOR((lamb_hdr*)x, 0)) {
       return g(x+1);
     } else if (MATCH_CTOR((lamb_hdr*)x, 1)) {
-      return f(x+1) + f(x+2);
+      return f(SKIP_HDR(x) + f(SKIP_HDR(x)+sizeof(lamb_hdr*));
     } else if (MATCH_CTOR((lamb_hdr*)x, 2)) {
       return f( *((int*)(x+1)) );
     }
@@ -294,7 +294,7 @@ int g(char* x)
     if (MATCH_CTOR((lamb_hdr*)x, 0)) {
       return 0;
     } else if (MATCH_CTOR((lamb_hdr*)x, 1)) {
-      return *((int*)(x+1)) + *((int*)(x+2))
+      return *((int*)(SKIP_HDR(x)) + *((int*)(SKIP_HDR(x)+sizeof(int)))
     }
     pattern_match_fail(x, 0, 1); // takes i and j
   }
