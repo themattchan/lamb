@@ -1,0 +1,5 @@
+let x = let y = (1, 2, 3)
+	in
+	    y[0]
+in
+   (x, x, x)

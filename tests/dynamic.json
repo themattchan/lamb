@@ -1,0 +1,17 @@
+[ {"name"   : "add-l"   , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "add-r"   , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "sub-l"   , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "sub-r"   , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "mul-l"   , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "mul-r"   , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "lt-l"    , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "lt-r"    , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "gt-l"    , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "gt-r"    , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "add1-e"  , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "sub1-e"  , "code" : "file", "result" : { "failure" : "expected a number" } }
+, {"name"   : "if1"     , "code" : "file", "result" : { "failure" : "expected a boolean" } }
+, {"name"   : "if2"     , "code" : "file", "result" : { "failure" : "expected a boolean" } }
+, {"name"   : "oflow00" , "code" : "file", "result" : { "failure" : "arithmetic overflow" } }
+, {"name"   : "oflow01" , "code" : "file", "result" : { "failure" : "arithmetic overflow" } }
+]

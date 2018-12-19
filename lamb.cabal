@@ -1,0 +1,87 @@
+name:                lamb
+version:             0.1.0.0
+synopsis:            a little lambda
+license:             MIT
+license-file:        LICENSE
+author:              Ranjit Jhala
+maintainer:          jhala@cs.ucsd.edu
+category:            Language
+build-type:          Simple
+cabal-version:       >=1.10
+
+data-files:
+  tests/adder.json,
+  tests/boa.json,
+  tests/cobra.json,
+  tests/anf.json,
+  tests/dynamic.json,
+  tests/static.json,
+  tests/diamondback.json,
+  tests/egg.json,
+  tests/fox.json,
+  tests/yourTests.json
+
+Library
+  ghc-options:         -W -threaded
+  other-modules:       Paths_lamb
+  exposed-modules:     Language.Lamb.Utils,
+                       Language.Lamb.UX,
+                       Language.Lamb.Types,
+                       Language.Lamb.AST,
+                       Language.Lamb.Parser,
+                       Language.Lamb.Checker,
+                       Language.Lamb.Normalizer,
+                       Language.Lamb.CG.C
+                       -- Language.Lamb.CG.Asm,
+                       -- Language.Lamb.CG.Compiler,
+                       -- Language.Lamb.Runner
+
+
+  -- other-extensions:
+  build-depends:       array, base,
+                       containers,
+                       pretty,
+                       cmdargs,
+                       process,
+                       directory,
+                       filepath,
+                       semigroups,
+                       megaparsec,
+                       tasty,
+                       tasty-hunit,
+                       tasty-rerun,
+                       process,
+                       text,
+                       transformers, mtl
+
+  hs-source-dirs:      lib
+  default-language:    Haskell2010
+
+Executable lamb
+
+  default-language:    Haskell2010
+  ghc-options:         -W -threaded
+  main-is:             Main.hs
+  hs-source-dirs:      bin
+  build-depends:       base,
+                       lamb
+
+test-suite test
+  default-language: Haskell98
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   tests
+  ghc-options:      -threaded
+  main-is:          Test.hs
+  other-modules:    Paths_lamb, Common
+  build-depends:    base,
+                    directory,
+                    filepath,
+                    tasty,
+                    tasty-hunit,
+                    tasty-rerun,
+                    text,
+                    aeson,
+                    bytestring,
+                    base,
+                    unordered-containers,
+                    fox

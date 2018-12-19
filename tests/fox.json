@@ -1,0 +1,12 @@
+[ {"name"  : "list-0"    ,   "code"   : "file" , "heap" : 26, "result" : { "value" : "(0, (1, (2, (3, (4, (5, false))))))"} }
+, {"name"  : "list-1"    ,   "code"   : "file" , "heap" : 26, "result" : { "value" : "6"} }
+, {"name"  : "list-full" ,   "code"   : "file" , "heap" : 50, "result" : { "value" : "6\n(5, (4, (3, (2, (1, (0, false))))))\n(0, (1, (2, (3, (4, (5, (0, (1, (2, (3, (4, (5, false))))))))))))\n0"} }
+, { "name"  : "gc-0"     ,   "code"   : "file" , "heap" : 8, "result" : { "value" : "(1, 1, 1)"} }
+, { "name"  : "gc-1"     ,   "code"   : "file" , "heap" : 14, "result" : { "value" : "(16, 26, 36)"} }
+, { "name"  : "gc-2"     ,   "code"   : "file" , "heap" : 14, "result" : { "value" : "(61, 62, 63)"} }
+, { "name"  : "gc-3"     ,   "code"   : "file" , "heap" : 14, "result" : { "value" : "(60001, 60002, 60003)"} }
+, { "name"  : "gc-fun-0" ,   "code"   : "file" , "heap" : 14, "result" : { "value" : "(60001, 60002, 60003)"} }
+, { "name"  : "gc-fun-1" ,   "code"   : "file" , "heap" : 22, "result" : { "value" : "45"} }
+, { "name"  : "gc-copy-0",   "code"   : "file" , "heap" : 14, "result" : { "value" : "(60001, 60002, 60003)"} }
+, { "name"  : "gc-copy-1" ,  "code"   : "file" , "heap" : 14, "result" : { "value" : "(60001, 60002, 60003)"} }
+]

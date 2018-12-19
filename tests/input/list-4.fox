@@ -1,0 +1,31 @@
+def link(h, t):
+  (h, t)
+
+def head(l):
+  l[0]
+
+def tail(l):
+  l[1]
+
+def isNull(l):
+  l == false 
+
+def append(l1, l2):
+  if isNull(l1):
+    l2
+  else:
+    let h1 = head(l1),
+        t1 = tail(l1)
+    in
+        link(h1, append(t1, l2))
+
+def range(i, j):
+  if (i < j):
+    link(i, range(i+1, j))
+  else: 
+    false 
+   
+let l0 = range(0, 3),
+    l1 = range(3, 6)
+in
+    append(l0, l1) 

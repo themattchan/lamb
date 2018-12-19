@@ -1,0 +1,10 @@
+def foo(p, q, r):
+  let tmp = (p, q, r) 
+  in tmp[0] + tmp[1] + tmp[2]
+
+let y = foo(10, 20, 30) 
+  , x = (1, 2, 3)
+  , z = foo(200, 300, 500)
+  , a = y * z
+in
+   (x[0] + a, x[1] + a, x[2] + a)

@@ -1,0 +1,15 @@
+[ {"name"  : "dyn3"   ,   "code"   : "file" , "result" : { "value" : "true"} },
+  {"name"  : "dyn4"   ,   "code"   : "file" , "result" : { "value" : "false"} },
+  {"name"  : "tuple-00"   ,   "code"   : "file" , "result" : { "value" : "20"} },
+  {"name"  : "tuple-01"   ,   "code"   : "file" , "result" : { "value" : "10\n20\n60"} },
+  {"name"  : "tuple-02"   ,   "code"   : "file" , "result" : { "value" : "(10, 20, 30)"} },
+  {"name"  : "tuple-03"   ,   "code"   : "file" , "result" : { "value" : "(10, 20, 30)\n(30, 20, 10)"} },
+  {"name"  : "tuple-04"   ,   "code"   : "file" , "result" : { "value" : "(10, 20, 30)\n(30, 20, (10, 20, 30))"} },
+  {"name"  : "tup-eq-0"   ,   "code"   : "file" , "result" : { "value" : "true"} },
+  {"name"  : "tup-eq-1"   ,   "code"   : "file" , "result" : { "value" : "false"} },
+  {"name"  : "list-0"   ,   "code"   : "file" , "result" : { "value" : "(0, (1, (2, (3, (4, (5, false))))))"} },
+  {"name"  : "list-1"   ,   "code"   : "file" , "result" : { "value" : "6"} },
+  {"name"  : "list-2"   ,   "code"   : "file" , "result" : { "value" : "(5, (4, (3, (2, (1, (0, false))))))"} },
+  {"name"  : "list-3"   ,   "code"   : "file" , "result" : { "value" : "(0, (1, (2, (3, (4, (5, false))))))"} },
+  {"name"  : "list-4"   ,   "code"   : "file" , "result" : { "value" : "(0, (1, (2, (3, (4, (5, false))))))"} }
+]

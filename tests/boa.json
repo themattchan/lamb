@@ -1,0 +1,27 @@
+[
+  {
+    "name"   : "expr1",
+    "code"   : "file",
+    "result" : { "value": "30" }
+  },
+  {
+    "name"   : "expr2",
+    "code"   : "file",
+    "result" : { "value": "20" }
+  },
+  {
+    "name"   : "expr3",
+    "code"   : "file",
+    "result" : { "value": "20" }
+  },
+  {
+    "name"   : "expr4",
+    "code"   : "file",
+    "result" : { "value": "-8" }
+  },
+  {
+    "name"   : "exp00",
+    "code"   : "file",
+    "result" : { "value": "65536" }
+  }
+]

@@ -1,0 +1,43 @@
+def link(h, t):
+  (h, t)
+
+def head(l):
+  l[0]
+
+def tail(l):
+  l[1]
+
+def isNull(l):
+  l == false
+
+def length(l):
+  if isNull(l):
+    0
+  else: 
+    1 + length(tail(l))
+
+def append(l1, l2):
+  if isNull(l1):
+    l2
+  else:
+    let h1 = head(l1),
+        t1 = tail(l1)
+    in
+        link(h1, append(t1, l2))
+
+def reverseHelper(acc, l):
+  if isNull(l):
+    acc
+  else: 
+    let h = head(l),
+        t = tail(l)
+    in 
+        reverseHelper(link(h, acc), t)
+
+def reverse(l):
+  reverseHelper(false, l)
+
+let l0 = link(0, link(1, link(2, link(3, link(4, link(5, false)))))) 
+in
+    reverse(l0)
+

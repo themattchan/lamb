@@ -1,0 +1,26 @@
+[
+  {
+    "name"   : "prim1",
+    "code"   : "add1(add1(add1(add1(x))))",
+    "result" : { "value": "(let anf0 = add1(x), anf1 = add1(anf0), anf2 = add1(anf1) in add1(anf2))" },
+    "anf"    : true
+  },
+  {
+    "name"   : "prim2",
+    "code"   : "((2 + 3) * (12 - 4)) * (7 + 8)",
+    "result" : { "value": "(let anf0 = 2 + 3, anf1 = 12 - 4, anf2 = anf0 * anf1, anf3 = 7 + 8 in anf2 * anf3)" },
+    "anf"    : true
+  },
+  {
+    "name"   : "let-1",
+    "code"   : "(let x = 10 in x + 5) + (let y = 20 in y - 5)",
+    "result" : { "value": "(let anf0 = (let x = 10 in x + 5), anf1 = (let y = 20 in y - 5) in anf0 + anf1)" },
+    "anf"    : true
+  },
+  {
+    "name"   : "if-1",
+    "code"   : "(if x: y + 1 else: z + 1) + 12",
+    "result" : { "value": "(let anf0 = (if x: y + 1 else: z + 1) in anf0 + 12)" },
+    "anf"    : true
+  }
+]

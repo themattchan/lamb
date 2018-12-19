@@ -1,0 +1,16 @@
+[ {"name"  : "neg00"   ,   "code"   : "file" , "result" : { "value" : "-3"} },
+  {"name"  : "neg01"   ,   "code"   : "file" , "result" : { "value" : "-2"} },
+  {"name"  : "print0"  ,   "code"   : "file" , "result" : { "value" : "12\n12"} },
+  {"name"  : "print1"  ,   "code"   : "file" , "result" : { "value" : "true\ntrue"} },
+  {"name"  : "print2"  ,   "code"   : "file" , "result" : { "value" : "false\nfalse"} },
+  {"name"  : "print3"  ,   "code"   : "file" , "result" : { "value" : "2\n4\n4"} },
+  {"name"  : "bool0"   ,   "code"   : "file" , "result" : { "value" : "false\ntrue"} },
+  {"name"  : "bool1"   ,   "code"   : "file" , "result" : { "value" : "10\ntrue"} },
+  {"name"  : "bool2"   ,   "code"   : "file" , "result" : { "value" : "6\nfalse\nfalse"} },
+  {"name"  : "bool3"   ,   "code"   : "file" , "result" : { "value" : "44"} },
+  {"name"  : "bool4"   ,   "code"   : "file" , "result" : { "value" : "100\ntrue\n200"} },
+  {"name"  : "dyn0"    ,   "code"   : "file" , "result" : { "value" : "120"} },
+  {"name"  : "dyn1"    ,   "code"   : "file" , "result" : { "value" : "13\n130"} },
+  {"name"  : "dyn2"    ,   "code"   : "file" , "result" : { "value" : "144"} }
+]
+

@@ -1,0 +1,10 @@
+[ {"name"   : "err-shadow-bind"   , "code" : "file", "result" : { "failure" : "shadow binding" } }
+, {"name"   : "err-arity"   , "code" : "file", "result" : { "failure" : "arity" } }
+, {"name"   : "err-not-defined"   , "code" : "file", "result" : { "failure" : "not defined" } }
+, {"name"   : "err-unbound-00"   , "code" : "file", "result" : { "failure" : "unbound" } }
+, {"name"   : "err-unbound-01"   , "code" : "file", "result" : { "failure" : "unbound" } }
+, {"name"   : "err-dup-param"   , "code" : "file", "result" : { "failure" : "duplicate parameter" } }
+, {"name"   : "err-dup-fun"    , "code" : "file", "result" : { "failure" : "duplicate function" } }
+, {"name"   : "err-large-00"    , "code" : "file", "result" : { "failure" : "too large" } }
+, {"name"   : "err-large-01"    , "code" : "file", "result" : { "failure" : "too large" } }
+]

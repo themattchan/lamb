@@ -1,0 +1,11 @@
+let y = let tmp = (10, 20, 30)
+        in tmp[0] + tmp[1] + tmp[2]
+
+  , x = (1, 2, 3)
+
+  , z = let tmp = (200, 300, 500)
+        in tmp[0] + tmp[1] + tmp[2]
+
+  , a = y * z
+in
+   (x[0] + a, x[1] + a, x[2] + a)

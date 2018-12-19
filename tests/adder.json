@@ -1,0 +1,37 @@
+[
+  {
+    "name"   : "forty_one",
+    "code"   : "41",
+    "result" : { "value": "41" }
+  },
+  {
+    "name"   : "nyi",
+    "code"   : "let x = 10 in x",
+    "result" : { "value": "10" }
+  },
+  {
+    "name"   : "five",
+    "code"   : "file",
+    "result" : { "value": "5" }
+  },
+  {
+    "name"   : "adds",
+    "code"   : "file",
+    "result" : { "value": "8" }
+  },
+  {
+    "name"   : "subs",
+    "code"   : "file",
+    "result" : { "value": "8" }
+  },
+  {
+    "name"   : "lets",
+    "code"   : "file",
+    "result" : { "value": "14" }
+  },
+  {
+    "name"   : "lets-unb",
+    "code"   : "file",
+    "result" : { "failure": "" }
+  }
+]
