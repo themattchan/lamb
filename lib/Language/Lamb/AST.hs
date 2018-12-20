@@ -32,7 +32,7 @@ foldTA alg (T ann f) = alg ann (fmap (foldTA alg) f)
 foldTAM :: (Traversable f, Monad m) => (ann -> f x -> m x) -> T ann f -> m x
 foldTAM alg (T ann f) = alg ann =<< traverse (foldTAM alg) f
 
-
+{-
 -- traverse :: Applicative m, Traversable f => (a -> m b) -> f a -> m (f b)
 mapAnnTM :: (Monad m, Traversable f)
          => (T ann1 f -> m ann2)
@@ -43,7 +43,7 @@ mapAnnTM f = foldTAM f' -- inn' <$> f t <*> traverse f' (out t)
     f' ann fx = f (T ann --?????
 --    f' :: T ann1 f -> m (T ann2 f)
 --    f' tInner = (`setAnn` tInner) <$> f tInner
-
+-}
 --------------------------------------------------------------------------------
 
 -- abstract over binders: parse into named bndrs, then transform into nameless
@@ -70,6 +70,10 @@ data ExpF bnd lit e
 -- this shall just be: App (App ("elim") e) e
 --  | Elim e e
   deriving (Functor, Foldable, Traversable)
+
+funs :: [(bnd, ann)] -> T ann (ExpF bnd lit) -> T ann (ExpF bnd lit)
+funs args e = foldr (\(arg, ann) e' -> T ann (Fun arg e')) e args
+types = funs
 
 -- primitive C types for now.
 data ELit
@@ -129,7 +133,7 @@ type Ann = ()
 -- TODO use row-types for ann
 type LExp ann = Exp Name ann
 type LTyp = Typ Name
-type LDecl ann = Decl Name
+type LDecl ann = Decl Name ann
 type LMod ann = Mod Name ann
 
 -- type AExp = Exp Name (SourceSpan,Int)

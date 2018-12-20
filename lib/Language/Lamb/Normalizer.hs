@@ -4,7 +4,7 @@
 
 module Language.Lamb.Normalizer ( anormal ) where
 
-import           Language.Lamb.Types
+--import           Language.Lamb.Types
 import Language.Lamb.AST
 import Language.Lamb.Utils
 

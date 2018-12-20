@@ -291,7 +291,7 @@ int f(char* x)
     if (MATCH_CTOR((lamb_hdr*)x, 0)) {
       return g(x+1);
     } else if (MATCH_CTOR((lamb_hdr*)x, 1)) {
-      return f(SKIP_HDR(x) + f(SKIP_HDR(x)+sizeof(lamb_hdr*));
+      return f(SKIP_HDR(x)) + f(SKIP_HDR(x)+sizeof(lamb_hdr*));
     } else if (MATCH_CTOR((lamb_hdr*)x, 2)) {
       return f( *((int*)(x+1)) );
     }

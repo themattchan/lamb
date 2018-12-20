@@ -1,28 +1,43 @@
-module Language.Lamb.Parser ( parse, parseFile ) where
+module Language.Lamb.Parser
+  ( parse
+  , parseFile
+  )
+where
 
 import           Control.Monad (void)
-import           Text.Megaparsec hiding (parse)
-import           Data.List.NonEmpty         as NE
-import qualified Text.Megaparsec.Char.Lexer as L
+import           Control.Monad.State.Strict
+import           Data.Either
+import qualified Data.List.NonEmpty as NE
+import qualified Data.Set as S
+import           Language.Lamb.AST
+import           Language.Lamb.UX --Types(Located, PPrint, SourceSpan(..))
+import           Text.Megaparsec hiding (State, parse)
 import           Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Megaparsec.Expr
-import           Language.Lamb.Types
 
-type Parser = Parsec SourcePos Text
+type Parser = ParsecT SourcePos Text (State PCtx)
+
+newtype PCtx = PCtx
+  { scopedIdents :: S.Set String
+  }
+
+emptyPCtx = PCtx mempty
 
 --------------------------------------------------------------------------------
-parseFile :: FilePath -> IO BareProgram
+parseFile :: FilePath -> IO (LMod SourceSpan)
 --------------------------------------------------------------------------------
 parseFile f = parse f <$> readFile f
 
 --------------------------------------------------------------------------------
-parse :: FilePath -> Text -> BareProgram
+parse :: FilePath -> Text -> LMod SourceSpan
 ----------------------------------------------------------------------------------
-parse = parseWith prog
+parse = parseWith parseMod
+
 parseWith  :: Parser a -> FilePath -> Text -> a
-parseWith p f s = case runParser (whole p) f s of
-                    Left err -> panic (show err) (posSpan . NE.head . errorPos $ err)
-                    Right e  -> e
+parseWith p f s = either fail id $ evalState (runParserT (whole p) f s) emptyPCtx
+  where
+   fail err = panic (show err) (posSpan . NE.head . errorPos $ err)
 
 -- https://mrkkrp.github.io/megaparsec/tutorials/parsing-simple-imperative-language.html
 instance Located (ParseError a b) where
@@ -31,113 +46,119 @@ instance Located (ParseError a b) where
 instance (Show a, Show b) => PPrint (ParseError a b) where
   pprint = show
 
-
-
 --------------------------------------------------------------------------------
--- | Top-Level Expression Parser
---------------------------------------------------------------------------------
-prog :: Parser BareProgram
-prog = Prog <$> many decl <*> expr
+-- | Large units
+----------------------------------------------------------------------------------
 
-expr :: Parser Bare
-expr = makeExprParser expr0 binops
-
-expr0 :: Parser Bare
-expr0 =  try primExpr
-     <|> try letExpr
-     <|> try ifExpr
-     <|> try getExpr
-     <|> try appExpr
-     <|> try tupExpr
-     <|> try constExpr
-     <|> idExpr
-
-exprs :: Parser [Bare]
-exprs = parens (sepBy1 expr comma)
-
---------------------------------------------------------------------------------
--- | Individual Sub-Expression Parsers
---------------------------------------------------------------------------------
-decl :: Parser BareDecl
-decl = withSpan' $ do
-  rWord "def"
-  f  <- binder
-  xs <- parens (sepBy binder comma) <* colon
-  e  <- expr
-  return (Decl f xs e)
-
-getExpr :: Parser Bare
-getExpr = withSpan' (GetItem <$> funExpr <*> brackets expr)
-
-appExpr :: Parser Bare
-appExpr = withSpan' (App <$> (fst <$> identifier) <*> exprs)
-
-funExpr :: Parser Bare
-funExpr = try idExpr <|> tupExpr
-
-tupExpr :: Parser Bare
-tupExpr = withSpan' (mkTuple <$> exprs)
-
-mkTuple :: [Bare] -> SourceSpan -> Bare
-mkTuple [e] _ = e
-mkTuple es  l = Tuple es l
-
-binops :: [[Operator Parser Bare]]
-binops =
-  [ [ InfixL (symbol "*"  *> pure (op Times))
-    ]
-  , [ InfixL (symbol "+"  *> pure (op Plus))
-    , InfixL (symbol "-"  *> pure (op Minus))
-    ]
-  , [ InfixL (symbol "==" *> pure (op Equal))
-    , InfixL (symbol ">"  *> pure (op Greater))
-    , InfixL (symbol "<"  *> pure (op Less))
-    ]
-  ]
+parseMod :: _ --Parser (LMod SourceSpan)
+parseMod = ( Mod <$> name <*> decls ::ModF Name SourceSpan (Mod Name SourceSpan))
   where
-    op o e1 e2 = Prim2 o e1 e2 (stretch [e1, e2])
+    name :: Parser Name
+    name = rword "module" *> pModuleName <* rword "where"
+    decls :: Parser [LDecl SourceSpan]
+    decls = many parseDecl
 
-idExpr :: Parser Bare
-idExpr = uncurry Id <$> identifier
-
-constExpr :: Parser Bare
-constExpr
-   =  (uncurry Number <$> integer)
-  <|> (Boolean True   <$> rWord "true")
-  <|> (Boolean False  <$> rWord "false")
-
-primExpr :: Parser Bare
-primExpr = withSpan' (Prim1 <$> primOp <*> parens expr)
-
-primOp :: Parser Prim1
-primOp
-  =  try (rWord "add1"    *> pure Add1)
- <|> try (rWord "sub1"    *> pure Sub1)
- <|> try (rWord "isNum"   *> pure IsNum)
- <|> try (rWord "isBool"  *> pure IsBool)
- <|> try (rWord "isTuple" *> pure IsTuple)
- <|>     (rWord "print"  *> pure Print)
-
-letExpr :: Parser Bare
-letExpr = withSpan' $ do
-  rWord "let"
-  bs <- sepBy1 bind comma
-  rWord "in"
-  e  <- expr
-  return (bindsExpr bs e)
-
-bind :: Parser (BareBind, Bare)
-bind = (,) <$> binder <* symbol "=" <*> expr
-
-ifExpr :: Parser Bare
-ifExpr = withSpan' $ do
-  rWord "if"
-  b  <- expr
-  e1 <- between colon elsecolon expr
-  e2 <- expr
-  return (If b e1 e2)
+parseDecl :: Parser (LDecl SourceSpan)
+parseDecl = wrap $ scDecl -- <|> dtDecl
   where
-   elsecolon = rWord "else" *> colon
+    scDecl = uncurry Sc <$> binder1 parseELit
+
+-- TODO figure out AST for types.
+{-
+    dtDecl = do
+      rword "type"
+      name <- fst <$> uident
+      params <- many ident
+      equal
+      cases <- sepBy1 product (char '|')
+      -- sumTree attempts to make a balanced tree of cases
+      pure $ Dt name (types params (sumTree cases))
+-}
+
+-- parse the core language.
+-- if this gets more complicated, then add a functor for the surface language
+-- and a desugaring step that lifts a natural transformation of surface ~> core
+-- over the cofree comonad.
+parseExpr :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
+parseExpr pl = wrap $
+  parseBind
+  <|> parseFun
+  <|> parseLet
+  <|> parseApp
+  <|> pl
+  <|> parens (parseExpr pl)
+
+-- expr :: Parser Bare
+-- expr = makeExprParser expr0 binops
+
+-- expr0 :: Parser Bare
+-- expr0 =  try primExpr
+--      <|> try letExpr
+--      <|> try ifExpr
+--      <|> try getExpr
+--      <|> try appExpr
+--      <|> try tupExpr
+--      <|> try constExpr
+--      <|> idExpr
+
+-- exprs :: Parser [Bare]
+-- exprs = parens (sepBy1 expr comma)
+
+--------------------------------------------------------------------------------
+-- | Parsers for ExpF
+--------------------------------------------------------------------------------
+parseBind :: Parser (T SourceSpan (ExpF String lit))
+parseBind = do
+  (i, ss) <- ident
+  pure $ T ss (Bnd i)
+
+parseFun :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
+parseFun pl = wrap $ do
+  rword "fun"
+  args <- many1 ident
+  lexeme "=>"
+  body <- parseExpr pl
+  pure $ funs args body
+
+parseApp :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
+parseApp pl = wrap $ App <$> parseExpr pl <*> parseExpr pl
+
+parseLet :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
+parseLet pl = wrap $ do
+  binds <- sepBy1 (binder1 pl) semi
+  semi
+  e <- parseExpr pl
+  pure $ Let binds e
+
+binder1 pl = do
+  rword "let"
+  name <- fst <$> ident
+  args <- many ident
+  equal
+  exp <- parseExpr pl
+  pure $ (name, funs args exp)
+
+parseLit :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
+parseLit = wrap . fmap Lit
+
+--------------------------------------------------------------------------------
+-- | ELit
+--------------------------------------------------------------------------------
+
+parseELit :: Parser ELit
+parseELit = oneOf [ cbool ]
+  where
+    cbool = fmap CBool $
+      (rword "True" *> pure True) <|>
+      (rword "False" *> pure False)
+
+
+--------------------------------------------------------------------------------
+-- | Names
+--------------------------------------------------------------------------------
+
+pModuleName :: Parser String
+pModuleName = intercalate "." . map fst <$> sepBy1 uident (char '.')
 
 --------------------------------------------------------------------------------
 -- | Tokenisers and Whitespace
@@ -163,6 +184,9 @@ comma = symbol ","
 colon :: Parser String
 colon = symbol ":"
 
+equal :: Parser String
+equal = symbol "="
+
 -- | 'parens' parses something between parenthesis.
 parens :: Parser a -> Parser a
 parens = betweenS "(" ")"
@@ -182,9 +206,9 @@ lexeme p = L.lexeme sc (withSpan p)
 integer :: Parser (Integer, SourceSpan)
 integer = lexeme L.decimal
 
--- | `rWord`
-rWord   :: String -> Parser SourceSpan
-rWord w = snd <$> (withSpan (string w) <* notFollowedBy alphaNumChar <* sc)
+-- | `rword`
+rword   :: String -> Parser SourceSpan
+rword w = snd <$> (withSpan (string w) <* notFollowedBy alphaNumChar <* sc)
 
 
 -- | list of reserved words
@@ -211,18 +235,24 @@ withSpan p = do
   p2 <- getPosition
   return (x, SS p1 p2)
 
--- | `binder` parses BareBind, used for let-binds and function parameters.
-binder :: Parser BareBind
-binder = uncurry Bind <$> identifier
 
--- | `identifier` parses identifiers: lower-case alphabets followed by alphas or digits
-identifier :: Parser (String, SourceSpan)
-identifier = lexeme (p >>= check)
+-- | `ident` parses idents: lower-case alphabets followed by alphas or digits
+ident :: Parser (String, SourceSpan)
+ident = lexeme (p >>= checkNotKeyword)
   where
-    p       = (:) <$> letterChar <*> many alphaNumChar
-    check x = if x `elem` keywords
-                then fail $ "keyword " ++ show x ++ " cannot be an identifier"
-                else return x
+    p = (:) <$> lowerChar <*> many (alphaNumChar <|> oneOf "_")
 
-stretch :: (Monoid a) => [Expr a] -> a
-stretch = mconcat . fmap getLabel
+uident :: Parser (String, SourceSpan)
+uident = lexeme (p >>= checkNotKeyword)
+  where
+    p = (:) <$> upperChar <*> many (alphaNumChar <|> oneOf "_")
+
+checkNotKeyword x
+  | x `elem` keywords = fail $ "keyword " ++ show x ++ " cannot be an ident"
+  | otherwise = return x
+
+-- Add a SourceSpan Annotation.
+wrap :: Parser (f (T SourceSpan f)) -> Parser (T SourceSpan f)
+wrap p = do --fmap (uncurry . flip T) . withSpan
+  (a, ss) <- withSpan p
+  pure $ T ss a
