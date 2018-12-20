@@ -1,4 +1,17 @@
 
+## phases
+
+- parse/desugar
+- sort-modules
+- renamer
+- sanitycheck  -- can
+- typecheck
+- closure-convert
+- lambda-lift
+- a-normal/cps -- probably don't need this
+- tail-elim
+- C-codegen
+
 ## surface syntax
 
 ```
