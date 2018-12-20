@@ -3,29 +3,62 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-module Language.Lamb.Utils where
+module Language.Lamb.Utils
+  ( module Language.Lamb.Utils
+  , module Control.Applicative
+  , module Control.Arrow
+  , module Control.Monad
+  , module Data.Bifunctor
+  , module Data.Bool
+  , module Data.Char
+  , module Data.Either
+  , module Data.Function
+  , module Data.Foldable
+--  , module Data.Semigroup
+  , module Data.Tuple
+  , module Data.Maybe
+  , module Data.Monoid
+  , module Data.List
+  , module Data.Ord
+  )
+where
 
-import qualified Data.Map  as M
-import qualified Data.List as L
-import           Data.Monoid
-import           Data.Maybe (fromMaybe)
-import           Data.Char (isSpace)
-import           Control.Exception
-import           Control.Monad
-import           Text.Printf
-import           System.Directory
-import           System.Exit
-import           System.FilePath
-import           System.IO
-import           System.Process
-import           System.Timeout
-import           System.Console.CmdArgs.Verbosity (whenLoud)
-import           Debug.Trace (trace)
+import Control.Applicative
+import Control.Arrow ((***), (&&&), (>>>), (<<<))
+import Control.Exception
+import Control.Monad
 import Control.Monad.IO.Class
+import Control.Monad.State.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict (StateT(..), evalStateT)
-import Control.Monad.State.Class
+import qualified Data.Array as A
+import Data.Bifunctor
+import Data.Bits
+import Data.Bool (bool)
+import Data.Char
+import Data.Either
+import Data.Foldable
+import Data.Function (on, (&))
 import Data.Functor.Identity
+import Data.List hiding (groupBy)
+import qualified Data.Map.Strict as M
+import Data.Maybe
+import Data.Monoid
+import Data.Ord (comparing)
+import Data.Tuple (swap)
+import Debug.Trace (trace)
+import Numeric (showHex, showIntAtBase)
+import System.Console.CmdArgs.Verbosity (whenLoud)
+import System.Directory
+import System.Exit
+import System.FilePath
+import System.IO
+import System.Process
+import System.Timeout
+import Text.Printf
+--import Data.Semigroup
+--import qualified Text.Regex.TDFA as RE
+--import qualified Text.Regex.TDFA.String as RE
 
 --------------------------------------------------------------------------------
 (>->) :: (a -> Either e b) -> (b -> c) -> a -> Either e c
@@ -35,10 +68,8 @@ f >-> g = f >=> safe g
     safe :: (a -> b) -> a -> Either c b
     safe h x = Right (h x)
 
-
-
 groupBy :: (Ord k) => (a -> k) -> [a] -> [(k, [a])]
-groupBy f = M.toList . L.foldl' (\m x -> inserts (f x) x m) M.empty
+groupBy f = M.toList . foldl' (\m x -> inserts (f x) x m) M.empty
 
 inserts :: (Ord k) => k -> v -> M.Map k [v] -> M.Map k [v]
 inserts k v m = M.insert k (v : M.findWithDefault [] k m) m

@@ -21,13 +21,18 @@ import           Text.Megaparsec.Expr
 import Debug.Trace
 import Data.Word
 import Data.Int
-type Parser = ParsecT SourcePos Text (State PCtx)
 
-newtype PCtx = PCtx
-  { scopedIdents :: S.Set String
-  }
 
-emptyPCtx = PCtx mempty
+--type Parser = ParsecT SourcePos Text (State PCtx)
+type Parser = Parsec SourcePos Text
+
+-- do name check in renamer.
+
+-- newtype PCtx = PCtx
+--   { scopedIdents :: S.Set String
+--   }
+
+-- emptyPCtx = PCtx mempty
 
 traceMe _ | True = pure ()
 traceMe x = traceM x
@@ -49,7 +54,10 @@ parse :: FilePath -> Text -> LMod SourceSpan
 parse = parseWith parseMod
 
 parseWith  :: Parser a -> FilePath -> Text -> a
-parseWith p f s = either fail id $ evalState (runParserT (whole p) f s) emptyPCtx
+parseWith p f s =
+  either fail id $
+  --flip evalState emptyPCtx $
+  runParser (whole p) f s
   where
    fail err = panic (show err) (posSpan . NE.head . errorPos $ err)
 

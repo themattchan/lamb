@@ -30,6 +30,7 @@ Library
                        Language.Lamb.AST,
                        Language.Lamb.Parser,
                        Language.Lamb.Checker,
+                       Language.Lamb.Renamer,
                        Language.Lamb.Normalizer,
                        Language.Lamb.CG.C
                        -- Language.Lamb.CG.Asm,

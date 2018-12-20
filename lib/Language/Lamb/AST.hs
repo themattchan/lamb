@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable,
 ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances #-}
 module Language.Lamb.AST where
+
 import Language.Lamb.UX (SourceSpan(..))
 import Data.List
 import Data.Functor.Const
@@ -151,18 +152,20 @@ instance (Show bnd) => Show (Mod bnd ann) where
 --  show = foldT show
   show (T _ (Mod bnd s)) = "module " <> show bnd <> " where" <> show s
 
-type Name = String
+type RawName = String
 type Ann = ()
 
 -- Actual types used
 
 -- TODO use row-types for ann
-type LExp ann = Exp Name ann
-type LTyp = Typ Name
-type LDecl ann = Decl Name ann
-type LMod ann = Mod Name ann
+type LExp ann = Exp RawName ann
+type LTyp = Typ RawName
+type LDecl ann = Decl RawName ann
+type LMod ann = Mod RawName ann
 
 -- type AExp = Exp Name (SourceSpan,Int)
 -- type ATyp = Typ Name
 -- type ADecl = Decl Name (SourceSpan,Int)
 -- type AMod = Mod Name (SourceSpan,Int)
+
+data Name = MyName
