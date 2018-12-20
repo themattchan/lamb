@@ -1,7 +1,8 @@
-{ mkDerivation, aeson, array, base, bytestring, cmdargs, containers
-, directory, filepath, fox, megaparsec, mtl, pretty, process
-, semigroups, stdenv, tasty, tasty-hunit, tasty-rerun, text
-, transformers, unordered-containers
+{ mkDerivation, aeson, array, base, bytestring, cmdargs, comonad
+, containers, directory, filepath, fox, free, lens, megaparsec, mtl
+, pretty, process, recursion-schemes, semigroups, stdenv, tasty
+, tasty-hunit, tasty-rerun, text, transformers
+, unordered-containers
 }:
 mkDerivation {
   pname = "lamb";
@@ -11,9 +12,9 @@ mkDerivation {
   isExecutable = true;
   enableSeparateDataOutput = true;
   libraryHaskellDepends = [
-    array base cmdargs containers directory filepath megaparsec mtl
-    pretty process semigroups tasty tasty-hunit tasty-rerun text
-    transformers
+    array base cmdargs comonad containers directory filepath free lens
+    megaparsec mtl pretty process recursion-schemes semigroups tasty
+    tasty-hunit tasty-rerun text transformers
   ];
   executableHaskellDepends = [ base ];
   testHaskellDepends = [

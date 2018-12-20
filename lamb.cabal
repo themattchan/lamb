@@ -52,7 +52,12 @@ Library
                        tasty-rerun,
                        process,
                        text,
-                       transformers, mtl
+                       transformers,
+                       mtl,
+                       recursion-schemes,
+                       comonad,
+                       free,
+                       lens
 
   hs-source-dirs:      lib
   default-language:    Haskell2010

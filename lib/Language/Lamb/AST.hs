@@ -1,13 +1,31 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveAnyClass, DeriveFoldable, KindSignatures, TypeFamilies, PatternSynonyms #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes #-}
 module Language.Lamb.AST where
 import Language.Lamb.UX (SourceSpan(..))
 
+import Control.Comonad.Cofree
+import Data.Functor.Base
+import Data.Functor.Foldable
+import Data.Functor.Foldable.TH
+import Data.Functor.Classes
 import Data.Functor.Const
 import Data.Word
 import Data.Int
 
+type T ann f = Cofree f ann
+
+pattern T ann f = ann :< f
+
+{-
 -- cofree comonad
 data T ann f  = T ann (f (T ann f))
+
+instance (Show ann, Show1 f) => Show (T ann f) where
+  showsPrec i (T ann f) = (("T "++) . showsPrec i ann) . ((" " ++) . showsPrec1 i f)
 
 getAnn :: T ann f -> ann
 getAnn (T a _) = a
@@ -31,7 +49,7 @@ foldTA alg (T ann f) = alg ann (fmap (foldTA alg) f)
 
 foldTAM :: (Traversable f, Monad m) => (ann -> f x -> m x) -> T ann f -> m x
 foldTAM alg (T ann f) = alg ann =<< traverse (foldTAM alg) f
-
+-}
 {-
 -- traverse :: Applicative m, Traversable f => (a -> m b) -> f a -> m (f b)
 mapAnnTM :: (Monad m, Traversable f)
@@ -50,30 +68,34 @@ mapAnnTM f = foldTAM f' -- inn' <$> f t <*> traverse f' (out t)
 -- repr
 
 -- an expr is a lambda calculus with sums and products.
-data ExpF bnd lit e
+data Exp bnd lit
   = Lit lit -- literals -- split into mylit and backend lit?
 -- some variable
   | Bnd bnd
 
   -- maybe use HOAS??
   -- | Fun (bnd -> e)
-  | Fun bnd e
+  | Fun bnd (Exp bnd lit)
 
   -- nonrecursive let*
-  | Let [(bnd, e)] e
+  | Let [(bnd, Exp bnd lit)] (Exp bnd lit)
 
-  | App e e
-
+  | App (Exp bnd lit) (Exp bnd lit)
   -- TODO: consider anonymous sums and products
   -- | Sum (bnd, e) (bnd, e)
   -- | Prd (bnd, e) (bnd, e)
 -- this shall just be: App (App ("elim") e) e
 --  | Elim e e
-  deriving (Functor, Foldable, Traversable)
+  deriving (Functor, Foldable, Traversable, Show)
 
-funs :: [(bnd, ann)] -> T ann (ExpF bnd lit) -> T ann (ExpF bnd lit)
-funs args e = foldr (\(arg, ann) e' -> T ann (Fun arg e')) e args
-types = funs
+-- instance (Show bnd, Show lit) => Show1 (ExpF bnd lit) where
+--   liftShowsPrec sp sl i (Lit l) = ("Lit " ++) . showsPrec i l
+--   liftShowsPrec sp sl i (Bnd b) = (("(Bnd " ++ show b ++ ")") <>)
+--   liftShowsPrec sp sl i (Fun b e) = (("(fun " ++ show b ++ " => ") <>) . sp i e . (")"<>)
+--   liftShowsPrec sp sl i (Let l e) = ("Let " ++) . f l . (" in " <>) . sp i e
+--     where
+--       f = foldl (\acc (b,e) -> ((show b <> " = ") <> ) . sp i e . (",\n " <>) . acc) id
+--   liftShowsPrec sp sl i (App x y) = ("App(" ++) . sp i x . (", " <>) . sp i y . (")" <>)
 
 -- primitive C types for now.
 data ELit
@@ -104,26 +126,51 @@ data TLit
   | CInt64t
   deriving (Show, Eq)
 
-type Exp bnd ann = T ann (ExpF bnd ELit)
-
--- FIXME want a separate type for DT definitions
-type Typ bnd = T () (ExpF bnd TLit)
-
 
 -- A decl is either a named supercombinator expression
 -- or a datatype.
 -- ?? can you remove ann from here ??
-data DeclF bnd ann e
-  = Sc bnd (Exp bnd ann)
-  | Dt bnd (Typ bnd)
+data Decl bnd
+  = Sc bnd (Exp bnd ELit)
+  | Dt bnd (Exp bnd TLit)
+  deriving Show
 
-type Decl bnd ann = T ann (DeclF bnd ann)
+-- instance (Show bnd, Show ann) => Show1 (DeclF bnd ann) where
+--   liftShowsPrec sp sl i (Sc b e) = (("Sc " <> show b <> " = ") <>) . showsPrec i e . ("\n"<>)
+--   liftShowsPrec sp sl i (Dt b e) = (("type " <> show b <> " = ") <>) . showsPrec i e. ("\n"<>)
+
+--type Decl bnd ann = T ann (DeclF bnd ann)
 
 -- A module is a collection of declarations.
-data ModF bnd ann e
-  = Mod bnd [Decl bnd ann]
+data Mod bnd
+  = Mod bnd [Decl bnd]
+  deriving Show
 
-type Mod bnd ann = T ann (ModF bnd ann)
+makeBaseFunctor ''Exp
+makeBaseFunctor ''Decl
+makeBaseFunctor ''Mod
+
+
+--type Exp bnd ann = T ann (ExpF bnd ELit)
+type LambExp bnd ann = Cofree (ExpF bnd ELit) ann
+
+funs :: [(bnd, ann)] -> T ann (ExpF bnd lit) -> T ann (ExpF bnd lit)
+funs args e = foldr (\(arg, ann) e' -> T ann (Fun arg e')) e args
+types = funs
+
+-- FIXME want a separate type for DT definitions
+--type Typ bnd = T () (ExpF bnd TLit)
+
+-- types dont have ann
+type LambTyp bnd = Mu (ExpF bnd TLit)
+
+type LambDecl bnd ann = Cofree (DeclF bnd) ann
+type LambMod bnd ann = Cofree (ModF bnd) ann
+
+-- instance (Show bnd, Show ann) => Show1 (ModF bnd ann) where
+--   liftShowsPrec sp sl i (Mod b e) = (("Module " <> show b <> " where \n") <>) . showList e
+
+--type Mod bnd ann = T ann (ModF bnd ann)
 
 type Name = String
 type Ann = ()
@@ -131,10 +178,10 @@ type Ann = ()
 -- Actual types used
 
 -- TODO use row-types for ann
-type LExp ann = Exp Name ann
-type LTyp = Typ Name
-type LDecl ann = Decl Name ann
-type LMod ann = Mod Name ann
+type LExp ann = LambExp Name ann
+type LTyp = LambTyp Name
+type LDecl ann = LambDecl Name ann
+type LMod ann = LambMod Name ann
 
 -- type AExp = Exp Name (SourceSpan,Int)
 -- type ATyp = Typ Name
