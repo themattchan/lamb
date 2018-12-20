@@ -88,6 +88,12 @@ funs :: [(bnd, ann)] -> T ann (ExpF bnd lit) -> T ann (ExpF bnd lit)
 funs args e = foldr (\(arg, ann) e' -> T ann (Fun arg e')) e args
 types = funs
 
+apps :: (ann -> ann -> ann)
+     -> T ann (ExpF bnd lit)
+     -> [T ann (ExpF bnd lit)]
+     -> T ann (ExpF bnd lit)
+apps (<>) op args = foldr (\x a -> T (getAnn a <> getAnn x) (App a x)) op args
+
 -- primitive C types for now.
 data ELit
   = CUInt8 Word8

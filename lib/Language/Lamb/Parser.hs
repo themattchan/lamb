@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeApplications, ScopedTypeVariables, ExistentialQuantification #-}
 
 module Language.Lamb.Parser
   -- ( parse
@@ -19,7 +19,8 @@ import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Megaparsec.Expr
 import Debug.Trace
-
+import Data.Word
+import Data.Int
 type Parser = ParsecT SourcePos Text (State PCtx)
 
 newtype PCtx = PCtx
@@ -67,7 +68,7 @@ parseMod :: Parser (LMod SourceSpan)
 parseMod = wrap $ Mod <$> name <*> decls
   where
     name = traceParser "parseModName" $ rword "module" *> pModuleName <* rword "where" <* sc
-    decls = traceParser "parseModDecls" $  sepBy parseDecl semi
+    decls = traceParser "parseModDecls" $  many (parseDecl<* semi)
 
 parseDecl :: Parser (LDecl SourceSpan)
 parseDecl = wrap $ scDecl -- <|> dtDecl
@@ -86,12 +87,33 @@ parseDecl = wrap $ scDecl -- <|> dtDecl
       pure $ Dt name (types params (sumTree cases))
 -}
 
+binops :: [[Operator Parser (T SourceSpan (ExpF String lit))]]
+binops =
+  [ [ InfixL (op2 "*"  )
+    ]
+  , [ InfixL (op2 "+"  )
+    , InfixL (op2 "-"  )
+    ]
+  , [ InfixL (op2 "==" )
+    , InfixL (op2 ">"  )
+    , InfixL (op2 "<"  )
+    ]
+  ]
+  where
+    op2 s = do
+      (op, ss) <- withSpan (symbol s)
+      pure $ \e1 e2 -> apps (<>) (T ss (Bnd op)) [e1, e2]
+--    op2 o e1 e2 = Prim2 o e1 e2 (stretch [e1, e2])
+
+
 -- parse the core language.
 -- if this gets more complicated, then add a functor for the surface language
 -- and a desugaring step that lifts a natural transformation of surface ~> core
 -- over the cofree comonad.
-parseExpr = parseExpr0
-parseExpr0 = parseApp
+
+parseExpr pl = makeExprParser (parseExpr0 pl) binops
+
+parseExpr0 pl = parseApp pl
 
 parseExpr1 :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
 parseExpr1 pl =
@@ -108,8 +130,6 @@ parseTerminal pl = choice[
   , try $ parseBind
   ]
 
--- expr :: Parser Bare
--- expr = makeExprParser expr0 binops
 
 -- expr0 :: Parser Bare
 -- expr0 =  try primExpr
@@ -174,12 +194,21 @@ parseLit = traceParser "parseLit" . wrap . fmap Lit
 --------------------------------------------------------------------------------
 
 parseELit :: Parser ELit
-parseELit = choice [ cbool ]
+parseELit = choice [ cbool, cword8 ]
   where
     cbool = fmap CBool (
       (rword "True" *> pure True) <|>
       (rword "False" *> pure False)
       )
+
+    cword8 = CUInt8 . fromIntegral . fst <$> integer
+
+-- inRange :: forall a. (Show a, Bounded b) => Parser a -> Parser a
+-- inRange p = p >>= \v ->
+--   if v >= minBound @a && v <= maxBound @a
+--   then pure v
+--   -- todo: better error
+--   else fail $ show v <> " not in range"
 
 --------------------------------------------------------------------------------
 -- | Names
