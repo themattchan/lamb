@@ -1,9 +1,9 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Language.Lamb.Parser
-  ( parse
-  , parseFile
-  )
+  -- ( parse
+  -- , parseFile
+  -- )
 where
 
 import           Control.Monad (void)
@@ -28,9 +28,13 @@ newtype PCtx = PCtx
 
 emptyPCtx = PCtx mempty
 
+traceMe _ | True = pure ()
+traceMe x = traceM x
+
+traceParser _ p | True = p
 traceParser s p = do
  p' <- p
- traceM $ "PARSED: ("<>s<>") "<>show p'
+ traceM $ "PARSED: ("<>s<>") " --  <>show p'
  pure p'
 
 --------------------------------------------------------------------------------
@@ -62,13 +66,13 @@ instance (Show a, Show b) => PPrint (ParseError a b) where
 parseMod :: Parser (LMod SourceSpan)
 parseMod = wrap $ Mod <$> name <*> decls
   where
-    name = traceParser "parseModName" $ rword "module" *> pModuleName <* rword "where"
+    name = traceParser "parseModName" $ rword "module" *> pModuleName <* rword "where" <* sc
     decls = traceParser "parseModDecls" $  sepBy parseDecl semi
 
 parseDecl :: Parser (LDecl SourceSpan)
 parseDecl = wrap $ scDecl -- <|> dtDecl
   where
-    scDecl = uncurry Sc <$> binder1 parseELit
+    scDecl = traceParser "parseScDecl" $ uncurry Sc <$> letBinder1 parseELit
 
 -- TODO figure out AST for types.
 {-
@@ -87,12 +91,13 @@ parseDecl = wrap $ scDecl -- <|> dtDecl
 -- and a desugaring step that lifts a natural transformation of surface ~> core
 -- over the cofree comonad.
 parseExpr :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseExpr pl = choice
-  [ parseBind
-  , parseFun pl
-  , parseLet pl
-  , parseApp pl
-  , parseLit pl
+parseExpr pl =
+  choice [
+    try $ parseFun pl
+  , try $ parseLet pl
+--  , try $ parseApp pl
+  , try $ parseLit pl
+  , try $ parseBind
   , parens (parseExpr pl)
   ]
 
@@ -116,29 +121,32 @@ parseExpr pl = choice
 -- | Parsers for ExpF
 --------------------------------------------------------------------------------
 parseBind :: Parser (T SourceSpan (ExpF String lit))
-parseBind = do
+parseBind = traceParser "parseBind" $ do
   (i, ss) <- ident
   pure $ T ss (Bnd i)
 
 parseFun :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseFun pl = do
+parseFun pl = traceParser "parseFun" $ do
   rword "fun"
+  traceMe "HERE"
   args <- some ident
   tok "=>"
+  traceMe "HERE2"
   body <- parseExpr pl
+  traceMe "HERE3"
   pure $ funs args body
 
 parseApp :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseApp pl = wrap $ App <$> parseExpr pl <*> parseExpr pl
+parseApp pl = wrap $ traceParser "parseApp" $ App <$> parseExpr pl <*> parseExpr pl
 
 parseLet :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseLet pl = wrap $ do
-  binds <- sepBy1 (binder1 pl) semi
+parseLet pl = wrap $ traceParser "parseLet" $ do
+  binds <- sepBy1 (letBinder1 pl) semi
   semi
   e <- parseExpr pl
   pure $ Let binds e
 
-binder1 pl = do
+letBinder1 pl = do
   rword "let"
   name <- fst <$> ident
   args <- many ident
@@ -147,7 +155,7 @@ binder1 pl = do
   pure $ (name, funs args exp)
 
 parseLit :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseLit = wrap . fmap Lit
+parseLit = traceParser "parseLit" . wrap . fmap Lit
 
 --------------------------------------------------------------------------------
 -- | ELit
