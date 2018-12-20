@@ -90,15 +90,22 @@ parseDecl = wrap $ scDecl -- <|> dtDecl
 -- if this gets more complicated, then add a functor for the surface language
 -- and a desugaring step that lifts a natural transformation of surface ~> core
 -- over the cofree comonad.
-parseExpr :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseExpr pl =
+parseExpr = parseExpr0
+parseExpr0 = parseApp
+
+parseExpr1 :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
+parseExpr1 pl =
   choice [
     try $ parseFun pl
   , try $ parseLet pl
 --  , try $ parseApp pl
-  , try $ parseLit pl
-  , try $ parseBind
+  , try $ parseTerminal pl
   , parens (parseExpr pl)
+  ]
+
+parseTerminal pl = choice[
+  try $ parseLit pl
+  , try $ parseBind
   ]
 
 -- expr :: Parser Bare
@@ -137,7 +144,12 @@ parseFun pl = traceParser "parseFun" $ do
   pure $ funs args body
 
 parseApp :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseApp pl = wrap $ traceParser "parseApp" $ App <$> parseExpr pl <*> parseExpr pl
+parseApp pl =
+  traceParser "parseApp" $ go (parseExpr1 pl)
+  where
+    go p1 = do
+      e <- p1
+      go (wrap (App e <$> p1)) <|> pure e
 
 parseLet :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
 parseLet pl = wrap $ traceParser "parseLet" $ do

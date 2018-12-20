@@ -143,7 +143,7 @@ data ModF bnd ann e
 type Mod bnd ann = T ann (ModF bnd ann)
 instance (Show bnd) => Show (Mod bnd ann) where
 --  show = foldT show
-  show (T _ (Mod bnd s)) = "module " <> show bnd <> " where"
+  show (T _ (Mod bnd s)) = "module " <> show bnd <> " where" <> show s
 
 type Name = String
 type Ann = ()
