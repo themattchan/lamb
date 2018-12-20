@@ -86,6 +86,10 @@ partition, the declaration order is retained (not that it matters).
 
 all supercombinators are in scope to each other (i.e. sc-decls will be compiled to a c header).
 
+if we decide that we need a separate desugarer (e.g. to separate desugar logic
+from parser), it should suffice to implement the full concrete syntax as
+pattern synonyms in a separate module.
+
 --------------------------------------------------------------------------------
 ## implementation details
 
