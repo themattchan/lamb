@@ -54,7 +54,7 @@ instance (Show a, Show b) => PPrint (ParseError a b) where
 ----------------------------------------------------------------------------------
 
 parseMod :: Parser (LMod SourceSpan)
-parseMod = wrap $ Mod <$> name <*> decls
+parseMod = wrap $ ModF <$> name <*> decls
   where
     name = rword "module" *> pModuleName <* rword "where"
     decls = sepBy parseDecl semi
@@ -62,7 +62,7 @@ parseMod = wrap $ Mod <$> name <*> decls
 parseDecl :: Parser (LDecl SourceSpan)
 parseDecl = wrap $ scDecl -- <|> dtDecl
   where
-    scDecl = uncurry Sc <$> binder1 parseELit
+    scDecl = uncurry ScF <$> binder1 parseELit
 
 -- TODO figure out AST for types.
 {-
@@ -112,7 +112,7 @@ parseExpr pl = choice
 parseBind :: Parser (T SourceSpan (ExpF String lit))
 parseBind = do
   (i, ss) <- ident
-  pure $ T ss (Bnd i)
+  pure $ T ss (BndF i)
 
 parseFun :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
 parseFun pl = do
@@ -123,14 +123,14 @@ parseFun pl = do
   pure $ funs args body
 
 parseApp :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseApp pl = wrap $ App <$> parseExpr pl <*> parseExpr pl
+parseApp pl = wrap $ AppF <$> parseExpr pl <*> parseExpr pl
 
 parseLet :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
 parseLet pl = wrap $ do
   binds <- sepBy1 (binder1 pl) semi
   semi
   e <- parseExpr pl
-  pure $ Let binds e
+  pure $ LetF binds e
 
 binder1 pl = do
   rword "let"
@@ -141,7 +141,7 @@ binder1 pl = do
   pure $ (name, funs args exp)
 
 parseLit :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseLit = wrap . fmap Lit
+parseLit = wrap . fmap LitF
 
 --------------------------------------------------------------------------------
 -- | ELit

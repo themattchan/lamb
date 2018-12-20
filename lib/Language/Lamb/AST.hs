@@ -87,6 +87,7 @@ data Exp bnd lit
 -- this shall just be: App (App ("elim") e) e
 --  | Elim e e
   deriving (Functor, Foldable, Traversable, Show)
+makeBaseFunctor ''Exp
 
 -- instance (Show bnd, Show lit) => Show1 (ExpF bnd lit) where
 --   liftShowsPrec sp sl i (Lit l) = ("Lit " ++) . showsPrec i l
@@ -127,35 +128,11 @@ data TLit
   deriving (Show, Eq)
 
 
--- A decl is either a named supercombinator expression
--- or a datatype.
--- ?? can you remove ann from here ??
-data Decl bnd
-  = Sc bnd (Exp bnd ELit)
-  | Dt bnd (Exp bnd TLit)
-  deriving Show
-
--- instance (Show bnd, Show ann) => Show1 (DeclF bnd ann) where
---   liftShowsPrec sp sl i (Sc b e) = (("Sc " <> show b <> " = ") <>) . showsPrec i e . ("\n"<>)
---   liftShowsPrec sp sl i (Dt b e) = (("type " <> show b <> " = ") <>) . showsPrec i e. ("\n"<>)
-
---type Decl bnd ann = T ann (DeclF bnd ann)
-
--- A module is a collection of declarations.
-data Mod bnd
-  = Mod bnd [Decl bnd]
-  deriving Show
-
-makeBaseFunctor ''Exp
-makeBaseFunctor ''Decl
-makeBaseFunctor ''Mod
-
-
 --type Exp bnd ann = T ann (ExpF bnd ELit)
 type LambExp bnd ann = Cofree (ExpF bnd ELit) ann
 
 funs :: [(bnd, ann)] -> T ann (ExpF bnd lit) -> T ann (ExpF bnd lit)
-funs args e = foldr (\(arg, ann) e' -> T ann (Fun arg e')) e args
+funs args e = foldr (\(arg, ann) e' -> T ann (FunF arg e')) e args
 types = funs
 
 -- FIXME want a separate type for DT definitions
@@ -164,8 +141,33 @@ types = funs
 -- types dont have ann
 type LambTyp bnd = Mu (ExpF bnd TLit)
 
-type LambDecl bnd ann = Cofree (DeclF bnd) ann
-type LambMod bnd ann = Cofree (ModF bnd) ann
+-- A decl is either a named supercombinator expression
+-- or a datatype.
+-- ?? can you remove ann from here ??
+data Decl bnd ann
+  = Sc bnd (LambExp bnd ann)
+  | Dt bnd (LambTyp bnd)
+--  deriving Show
+makeBaseFunctor ''Decl
+
+---type LambDecl bnd ann = Cofree (DeclF bnd ann) ann
+
+-- instance (Show bnd, Show ann) => Show1 (DeclF bnd ann) where
+--   liftShowsPrec sp sl i (Sc b e) = (("Sc " <> show b <> " = ") <>) . showsPrec i e . ("\n"<>)
+--   liftShowsPrec sp sl i (Dt b e) = (("type " <> show b <> " = ") <>) . showsPrec i e. ("\n"<>)
+
+type LambDecl bnd ann = T ann (DeclF bnd ann)
+
+-- A module is a collection of declarations.
+data Mod bnd ann
+  = Mod bnd [LambDecl bnd ann]
+--  deriving Show
+
+makeBaseFunctor ''Mod
+
+
+
+type LambMod bnd ann = Cofree (ModF bnd ann) ann
 
 -- instance (Show bnd, Show ann) => Show1 (ModF bnd ann) where
 --   liftShowsPrec sp sl i (Mod b e) = (("Module " <> show b <> " where \n") <>) . showList e
