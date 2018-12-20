@@ -56,6 +56,36 @@ mapAnnTM f = foldTAM f' -- inn' <$> f t <*> traverse f' (out t)
 -- abstract over binders: parse into named bndrs, then transform into nameless
 -- repr
 
+{-
+-- The untyped lambda calculua
+data LamF bnd lit e
+  = Lit lit
+  | Bnd bnd
+  | Fun bnd e
+  | App e e
+
+-- extra stuff needed for core lamb expressions
+data LambExpF bnd e
+  = Let [(bnd, e)] e
+  | Dt (DtF bnd e)
+
+
+-- need a way to ensure that this is a sum of products.
+data DtF bnd e
+  = Sum (bnd, e) (bnd, e)
+  | Prd (bnd, e) (bnd, e)
+
+-- types are just lambda terms, where fun is quantification and arrow is a
+-- unique binder.
+type TypF bnd lit = LamF bnd lit :+: DtF bnd
+
+type ExpF bnd lit = LamF bnd lit :+: LambExpF  bnd
+
+
+-}
+
+
+
 -- an expr is a lambda calculus with sums and products.
 data ExpF bnd lit e
   = Lit lit -- literals -- split into mylit and backend lit?
