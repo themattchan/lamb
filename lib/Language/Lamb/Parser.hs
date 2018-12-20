@@ -7,6 +7,7 @@ where
 import           Control.Monad (void)
 import           Control.Monad.State.Strict
 import           Data.Either
+import           Data.List
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Set as S
 import           Language.Lamb.AST
@@ -80,13 +81,14 @@ parseDecl = wrap $ scDecl -- <|> dtDecl
 -- and a desugaring step that lifts a natural transformation of surface ~> core
 -- over the cofree comonad.
 parseExpr :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseExpr pl = wrap $
-  parseBind
-  <|> parseFun
-  <|> parseLet
-  <|> parseApp
-  <|> pl
-  <|> parens (parseExpr pl)
+parseExpr pl = choice
+  [ parseBind
+  , parseFun pl
+  , parseLet pl
+  , parseApp pl
+  , parseLit pl
+  , parens (parseExpr pl)
+  ]
 
 -- expr :: Parser Bare
 -- expr = makeExprParser expr0 binops
@@ -115,8 +117,8 @@ parseBind = do
 parseFun :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
 parseFun pl = wrap $ do
   rword "fun"
-  args <- many1 ident
-  lexeme "=>"
+  args <- some ident
+  tok "=>"
   body <- parseExpr pl
   pure $ funs args body
 
@@ -146,12 +148,12 @@ parseLit = wrap . fmap Lit
 --------------------------------------------------------------------------------
 
 parseELit :: Parser ELit
-parseELit = oneOf [ cbool ]
+parseELit = choice [ cbool ]
   where
-    cbool = fmap CBool $
+    cbool = fmap CBool (
       (rword "True" *> pure True) <|>
       (rword "False" *> pure False)
-
+      )
 
 --------------------------------------------------------------------------------
 -- | Names
@@ -183,6 +185,8 @@ comma = symbol ","
 
 colon :: Parser String
 colon = symbol ":"
+semi :: Parser String
+semi = symbol ";"
 
 equal :: Parser String
 equal = symbol "="
@@ -201,6 +205,8 @@ betweenS l r = between (symbol l) (symbol r)
 -- | `lexeme p` consume whitespace after running p
 lexeme :: Parser a -> Parser (a, SourceSpan)
 lexeme p = L.lexeme sc (withSpan p)
+
+tok = lexeme . string
 
 -- | 'integer' parses an integer.
 integer :: Parser (Integer, SourceSpan)
