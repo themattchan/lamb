@@ -1,10 +1,16 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable,
+ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances #-}
 module Language.Lamb.AST where
 import Language.Lamb.UX (SourceSpan(..))
-
+import Data.List
 import Data.Functor.Const
 import Data.Word
 import Data.Int
+
+data T0 f = T0 (f (T0 f))
+
+eraseAnn :: Functor f => T ann f -> T0 f
+eraseAnn = T0 . fmap eraseAnn . out
 
 -- cofree comonad
 data T ann f  = T ann (f (T ann f))
@@ -69,7 +75,14 @@ data ExpF bnd lit e
   -- | Prd (bnd, e) (bnd, e)
 -- this shall just be: App (App ("elim") e) e
 --  | Elim e e
-  deriving (Functor, Foldable, Traversable)
+  deriving (Functor, Foldable, Traversable, Show)
+
+showExpF :: (Show bnd, Show lit) => ExpF bnd lit String -> String
+showExpF (Lit l) = "(Lit " <> show l <> ")"
+showExpF (Bnd b) = "(Bnd " <> show b <> ")"
+showExpF (Fun b e) = "(fun " <> show b <> " => " <> e <> ")"
+showExpF (Let bs e) = "(let " <> intercalate ", " [show x<>" = "<>y| (x,y)<-bs] <> " in " <> e <> ")"
+showExpF (App e1 e2) = "(App " <> e1 <>" "<>e2<> ")"
 
 funs :: [(bnd, ann)] -> T ann (ExpF bnd lit) -> T ann (ExpF bnd lit)
 funs args e = foldr (\(arg, ann) e' -> T ann (Fun arg e')) e args
@@ -106,8 +119,11 @@ data TLit
 
 type Exp bnd ann = T ann (ExpF bnd ELit)
 
+instance (Show bnd) => Show (Exp bnd ann) where show = foldT showExpF
+
 -- FIXME want a separate type for DT definitions
 type Typ bnd = T () (ExpF bnd TLit)
+instance (Show bnd) => Show (Typ bnd) where show = foldT showExpF
 
 
 -- A decl is either a named supercombinator expression
@@ -116,14 +132,18 @@ type Typ bnd = T () (ExpF bnd TLit)
 data DeclF bnd ann e
   = Sc bnd (Exp bnd ann)
   | Dt bnd (Typ bnd)
-
+  deriving (Show,Functor)
 type Decl bnd ann = T ann (DeclF bnd ann)
+instance (Show bnd) => Show (Decl bnd ann) where show = foldT show
 
 -- A module is a collection of declarations.
 data ModF bnd ann e
   = Mod bnd [Decl bnd ann]
-
+  deriving (Show, Functor)
 type Mod bnd ann = T ann (ModF bnd ann)
+instance (Show bnd) => Show (Mod bnd ann) where
+--  show = foldT show
+  show (T _ (Mod bnd s)) = "module " <> show bnd <> " where"
 
 type Name = String
 type Ann = ()

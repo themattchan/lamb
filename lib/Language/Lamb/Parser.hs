@@ -18,6 +18,7 @@ import           Text.Megaparsec hiding (State, parse)
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import           Text.Megaparsec.Expr
+import Debug.Trace
 
 type Parser = ParsecT SourcePos Text (State PCtx)
 
@@ -26,6 +27,11 @@ newtype PCtx = PCtx
   }
 
 emptyPCtx = PCtx mempty
+
+traceParser s p = do
+ p' <- p
+ traceM $ "PARSED: ("<>s<>") "<>show p'
+ pure p'
 
 --------------------------------------------------------------------------------
 parseFile :: FilePath -> IO (LMod SourceSpan)
@@ -56,8 +62,8 @@ instance (Show a, Show b) => PPrint (ParseError a b) where
 parseMod :: Parser (LMod SourceSpan)
 parseMod = wrap $ Mod <$> name <*> decls
   where
-    name = rword "module" *> pModuleName <* rword "where"
-    decls = sepBy parseDecl semi
+    name = traceParser "parseModName" $ rword "module" *> pModuleName <* rword "where"
+    decls = traceParser "parseModDecls" $  sepBy parseDecl semi
 
 parseDecl :: Parser (LDecl SourceSpan)
 parseDecl = wrap $ scDecl -- <|> dtDecl
