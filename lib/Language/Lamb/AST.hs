@@ -121,7 +121,7 @@ type Decl bnd ann = T ann (DeclF bnd ann)
 
 -- A module is a collection of declarations.
 data ModF bnd ann e
-  = Mod bnd [Decl ann bnd]
+  = Mod bnd [Decl bnd ann]
 
 type Mod bnd ann = T ann (ModF bnd ann)
 

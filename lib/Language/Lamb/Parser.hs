@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Language.Lamb.Parser
   ( parse
   , parseFile
@@ -51,12 +53,10 @@ instance (Show a, Show b) => PPrint (ParseError a b) where
 -- | Large units
 ----------------------------------------------------------------------------------
 
-parseMod :: _ --Parser (LMod SourceSpan)
-parseMod = ( Mod <$> name <*> decls ::ModF Name SourceSpan (Mod Name SourceSpan))
+parseMod :: Parser (LMod SourceSpan)
+parseMod = wrap $ Mod <$> name <*> decls
   where
-    name :: Parser Name
     name = rword "module" *> pModuleName <* rword "where"
-    decls :: Parser [LDecl SourceSpan]
     decls = many parseDecl
 
 parseDecl :: Parser (LDecl SourceSpan)
@@ -115,7 +115,7 @@ parseBind = do
   pure $ T ss (Bnd i)
 
 parseFun :: Parser lit -> Parser (T SourceSpan (ExpF String lit))
-parseFun pl = wrap $ do
+parseFun pl = do
   rword "fun"
   args <- some ident
   tok "=>"
@@ -246,12 +246,12 @@ withSpan p = do
 ident :: Parser (String, SourceSpan)
 ident = lexeme (p >>= checkNotKeyword)
   where
-    p = (:) <$> lowerChar <*> many (alphaNumChar <|> oneOf "_")
+    p = (:) <$> lowerChar <*> many (alphaNumChar <|> oneOf @[] "_")
 
 uident :: Parser (String, SourceSpan)
 uident = lexeme (p >>= checkNotKeyword)
   where
-    p = (:) <$> upperChar <*> many (alphaNumChar <|> oneOf "_")
+    p = (:) <$> upperChar <*> many (alphaNumChar <|> oneOf @[] "_")
 
 checkNotKeyword x
   | x `elem` keywords = fail $ "keyword " ++ show x ++ " cannot be an ident"
@@ -259,6 +259,4 @@ checkNotKeyword x
 
 -- Add a SourceSpan Annotation.
 wrap :: Parser (f (T SourceSpan f)) -> Parser (T SourceSpan f)
-wrap p = do --fmap (uncurry . flip T) . withSpan
-  (a, ss) <- withSpan p
-  pure $ T ss a
+wrap = fmap (uncurry (flip T)) . withSpan
