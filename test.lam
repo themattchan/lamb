@@ -1,0 +1,3 @@
+module Fully.Qualified.Module where
+
+let foo x = (fun y => True) False

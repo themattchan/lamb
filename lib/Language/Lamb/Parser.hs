@@ -57,7 +57,7 @@ parseMod :: Parser (LMod SourceSpan)
 parseMod = wrap $ Mod <$> name <*> decls
   where
     name = rword "module" *> pModuleName <* rword "where"
-    decls = many parseDecl
+    decls = sepBy parseDecl semi
 
 parseDecl :: Parser (LDecl SourceSpan)
 parseDecl = wrap $ scDecl -- <|> dtDecl
